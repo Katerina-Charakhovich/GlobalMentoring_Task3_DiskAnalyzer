@@ -10,7 +10,7 @@ class AppTest {
 
    @Test
     void testDiskAnalizer()  {
-       String[] args = { "-s","s","-cfsc","-plf", "5", "-as", "c:/1/song-service"};
+       String[] args = { "-fs", "c:/project"};
        App app = new App();
        new CommandLine(new App())
                .setCaseInsensitiveEnumValuesAllowed(true)

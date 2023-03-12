@@ -1,5 +1,8 @@
 package com.epam.disk.analizer;
 
+import com.epam.disk.analizer.scanner.Animation;
+import com.epam.disk.analizer.scanner.FileTask;
+import com.epam.disk.analizer.scanner.Statistic;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -16,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,13 +63,17 @@ public class App implements Callable<Integer> {
             description = "The divided files by first letter .")
     private boolean isCalculateCountFileStartByChar;
 
+    @Option (names = {"-fs", "--file-size"},
+    description = "File Scanner that scans a specified folder and provides detailed statistics such as file count, " +
+            "folder count, Size (sum of all files size) ")
+    private boolean isFileScanner;
+
     @Parameters(index = "0",
             description = "Path to directory")
     private Path path;
 
     @Override
     public Integer call() throws Exception {
-        System.out.println("Start");
         List<Path> files = null;
         if (searchChar != '\u0000') {
             files = getFiles(path);
@@ -96,8 +104,22 @@ public class App implements Callable<Integer> {
             dividedFilesGroupByFirstLetter
                     .forEach((key, value) -> System.out.println(value + "count files, started from char " + key));
         }
+
+        if (isFileScanner){
+            Animation.getInstance().start();
+
+            FileTask fileTask = new FileTask(path);
+            Statistic statistic =  new ForkJoinPool().invoke(fileTask);
+
+            Animation.getInstance().stop();
+            System.out.println("Total files count: " + statistic.getFileCount().longValue());
+            System.out.println("Total folders count: " + statistic.getFolderCount().longValue());
+            System.out.println("Total files size: " + statistic.getFilesSize().longValue());
+        }
         return 1;
     }
+
+
 
     public List<Para> filesByMostCharacterRepeat(List<Path> files) {
         if (files.isEmpty()) {
